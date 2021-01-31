@@ -1,5 +1,5 @@
 # Dakota Orrock's Project 1 Readme
-## The Scriptures Mapped
+## The Scriptures, Mapped
 
 ### What did I learn (HW #5)
 - I was not aware of the HTML 5 Boiler Plate template. It was cool to see that I could use that to skip alot of the project setup.
