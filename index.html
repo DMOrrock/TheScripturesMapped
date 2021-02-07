@@ -43,6 +43,7 @@
 
     ready(function () {
       Scriptures.init( () => { console.log('Initialized Scriptures Module')});
+      window.addEventListener("hashchange", Scriptures.onHashChanged);
     });
   </script>
 
