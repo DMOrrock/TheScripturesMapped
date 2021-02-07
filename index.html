@@ -32,6 +32,25 @@
 
   </div>
 
+  <script>
+    function ready(fn) {
+      if (document.readyState != 'loading') {
+        fn();
+      } else {
+        document.addEventListener('DOMContentLoaded', fn);
+      }
+    }
+
+    function renderVolumesAndBooks(){
+      document.getElementById("navigator").innerHTML = "<b>Loaded Scriptures from server</b>";
+    }
+
+    ready(function () {
+      //console.log("In the callback that I passed to ready");
+      Scriptures.init(renderVolumesAndBooks);
+    });
+  </script>
+
 </body>
 
 </html>
