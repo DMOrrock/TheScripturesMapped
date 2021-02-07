@@ -10,8 +10,12 @@ const Scriptures = (function () {
     "use strict";
 
     /*--------------------------------------------------------------------
-     *                      CONSTANTS
-     */
+    *                      CONSTANTS
+    */
+
+    const URL_BASE = "https://scriptures.byu.edu/";
+    const URL_BOOKS = `${URL_BASE}mapscrip/model/books.php`;
+    const URL_VOLUMES = `${URL_BASE}mapscrip/model/volumes.php`;
 
     /*--------------------------------------------------------------------
     *                       PRIVATE VARIABLES
@@ -50,7 +54,6 @@ const Scriptures = (function () {
         };
 
         request.onerror = failureCallback;
-
         request.send();
     };
 
@@ -76,24 +79,26 @@ const Scriptures = (function () {
         let booksLoaded = false;
         let volumesLoaded = false;
 
-        ajax("https://scriptures.byu.edu/mapscrip/model/books.php",
-            data => {
+        ajax(URL_BOOKS, data => {
                 books = data;
                 booksLoaded = true;
 
                 if (volumesLoaded) {
                     cacheBooks(callback);
+                    // console.log(volumes);
+                    // console.log(books);
                 }
             }
         );
 
-        ajax("https://scriptures.byu.edu/mapscrip/model/volumes.php",
-            data => {
+        ajax(URL_VOLUMES, data => {
                 volumes = data;
                 volumesLoaded = true;
 
                 if (booksLoaded) {
                     cacheBooks(callback);
+                    // console.log(volumes);
+                    // console.log(books);
                 }
             }
         );
@@ -104,6 +109,6 @@ const Scriptures = (function () {
     */
 
     return {
-        init: init,
+        init
     };
 }());
