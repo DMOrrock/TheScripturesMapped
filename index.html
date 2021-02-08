@@ -42,7 +42,7 @@
     }
 
     ready(function () {
-      Scriptures.init( () => { console.log('Initialized Scriptures Module')});
+      Scriptures.init( () => { Scriptures.onHashChanged(); });
       window.addEventListener("hashchange", Scriptures.onHashChanged);
     });
   </script>

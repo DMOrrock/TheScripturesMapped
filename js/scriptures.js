@@ -15,6 +15,7 @@ const Scriptures = (function () {
 
     const BOTTOM_PADDING = "<br /><br />";
     const CLASS_BOOKS = "books";
+    const CLASS_BUTTON = "btn"
     const CLASS_VOLUMES = "volumes";
     const DIV_SCRIPTURES_NAVIGATOR = "scripnav"
     const DIV_SCRIPTURES = "scriptures"
@@ -38,6 +39,8 @@ const Scriptures = (function () {
     let ajax;
     let cacheBooks;
     let bookChapterValid;
+    let booksGrid;
+    let booksGridContent;
     let htmlAnchor;
     let htmlDiv;
     let htmlElement;
@@ -48,6 +51,7 @@ const Scriptures = (function () {
     let navigateChapter;
     let navigateHome;
     let onHashChanged;
+    let volumesGridContent;
 
 
 
@@ -83,13 +87,35 @@ const Scriptures = (function () {
         if (book === undefined || chapter < 0 || chapter > book.numChapters) {
             return false;
         }
-        
+
         if (chapter === 0 && book.numChapters > 0) {
             return false;
         }
 
         return true;
-    }
+    };
+
+    booksGrid = function (volume) {
+        return htmlDiv({
+            classKey: CLASS_BOOKS,
+            content: booksGridContent(volume)
+        })
+    };
+
+    booksGridContent = function (volume){
+        let gridContent = "";
+
+        volume.books.forEach(function (book) {
+            gridContent += htmlLink({
+                classKey: CLASS_BUTTON,
+                id: book.id,
+                href: `#${volume.id}:${book.id}`,
+                content: book.gridName
+            })
+        })
+
+        return gridContent;
+    };
 
     cacheBooks = function (callback) {
         volumes.forEach(volume => {
@@ -111,7 +137,7 @@ const Scriptures = (function () {
 
     htmlAnchor = function (volume) {
         return `<a name="v${volume.id}" />`;
-    }
+    };
 
     htmlDiv = function (parameters) {
         let classString = "";
@@ -131,11 +157,11 @@ const Scriptures = (function () {
         }
 
         return `<div${idString}${classString}>${contentString}</div>`;
-    }
+    };
 
     htmlElement = function (tagName, content) {
         return `<${tagName}>${content}</${tagName}>`;
-    }
+    };
 
     htmlLink = function (parameters) {
         let classString = "";
@@ -143,8 +169,8 @@ const Scriptures = (function () {
         let hrefString = "";
         let idString = "";
 
-        if (parameters.classkey !== undefined) {
-            classString = ` class="${parameters.classkey}"`;
+        if (parameters.classKey !== undefined) {
+            classString = ` class="${parameters.classKey}"`;
         }
 
         if (parameters.content !== undefined) {
@@ -159,12 +185,12 @@ const Scriptures = (function () {
             idString = ` id="${parameters.id}"`;
         }
 
-        return `<div${idString}${classString}${hrefString}>${contentString}</div>`;
-    }
+        return `<a${idString}${classString}${hrefString}>${contentString}</a>`;
+    };
 
     htmlHashLink = function (haschArguments, content) {
         return `<a href="javascript:void(0)" onclick="changeHash(${haschArguments})">${content}<a/>`;
-    }
+    };
 
     init = function (callback) {
         let booksLoaded = false;
@@ -179,8 +205,7 @@ const Scriptures = (function () {
                 // console.log(volumes);
                 // console.log(books);
             }
-        }
-        );
+        });
 
         ajax(URL_VOLUMES, data => {
             volumes = data;
@@ -191,26 +216,24 @@ const Scriptures = (function () {
                 // console.log(volumes);
                 // console.log(books);
             }
-        }
-        );
+        });
     };
 
     navigateBook = function (bookId) {
         console.log("navigateBook", bookId);
-    }
+    };
 
     navigateChapter = function (bookId, chapter) {
         console.log("navigateChapter", bookId, " - ", chapter);
-    }
+    };
 
     navigateHome = function (volumeId) {
-        document.getElementById(DIV_SCRIPTURES).innerHTML =
-            "<div>Old Testament</div>" +
-            "<div>New Testament</div>" +
-            "<div>Book of Mormon</div>" +
-            "<div>Doctrine and Covenants</div>" +
-            "<div>Pearl of Great Price</div>" + volumeId;
-    }
+        document.getElementById(DIV_SCRIPTURES).innerHTML = htmlDiv({
+            id: DIV_SCRIPTURES_NAVIGATOR,
+            content: volumesGridContent(volumeId)
+        });
+
+    };
 
     onHashChanged = function () {
         let ids = [];
@@ -254,7 +277,24 @@ const Scriptures = (function () {
                 }
             }
         }
-    }
+    };
+
+    volumesGridContent = function (volumeId) {
+        let gridContent = "";
+
+        volumes.forEach( function (volume) {
+            if (volumeId === undefined || volumeId === volume.id) {
+                gridContent += htmlDiv({
+                    classKey: CLASS_VOLUMES,
+                    content: htmlAnchor(volume) + htmlElement ( TAG_HEADERS, volume.fullName)
+                })
+
+                gridContent += booksGrid(volume);
+            }
+        })
+
+        return gridContent;
+    };
 
     /*--------------------------------------------------------------------
     *                       PUBLIC API
