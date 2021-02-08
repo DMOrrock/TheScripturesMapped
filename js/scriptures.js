@@ -5,6 +5,16 @@
 *
 * DESCRIPTION: Front end JS for Project 1 - IS 542 - BYU
 */
+/*jslint
+    browser, long, this
+*/
+/*property
+    books, classKey, content, forEach, fullName, getElementById, gridName, hash,
+    href, id, init, innerHTML, length, log, maxBookId, minBookId, numChapters,
+    onHashChanged, onerror, onload, open, parse, push, response, send, slice,
+    split, status
+*/
+
 
 const Scriptures = (function () {
     "use strict";
@@ -15,14 +25,15 @@ const Scriptures = (function () {
 
     const BOTTOM_PADDING = "<br /><br />";
     const CLASS_BOOKS = "books";
-    const CLASS_BUTTON = "btn"
+    const CLASS_BUTTON = "btn";
     const CLASS_VOLUMES = "volumes";
-    const DIV_SCRIPTURES_NAVIGATOR = "scripnav"
-    const DIV_SCRIPTURES = "scriptures"
+    const CLASS_CHAPTER = "chapter";
+    const DIV_SCRIPTURES_NAVIGATOR = "scripnav";
+    const DIV_SCRIPTURES = "scriptures";
     const REQUEST_GET = "GET";
     const REQUEST_STATUS_OK = 200;
     const REQUEST_STATUS_ERROR = 400;
-    const TAG_HEADERS = "h5";
+    const TAG_HEADERS = "h3";
     const URL_BASE = "https://scriptures.byu.edu/";
     const URL_BOOKS = `${URL_BASE}mapscrip/model/books.php`;
     const URL_VOLUMES = `${URL_BASE}mapscrip/model/volumes.php`;
@@ -41,6 +52,8 @@ const Scriptures = (function () {
     let bookChapterValid;
     let booksGrid;
     let booksGridContent;
+    let chaptersGrid;
+    let chaptersGridContent;
     let htmlAnchor;
     let htmlDiv;
     let htmlElement;
@@ -99,7 +112,7 @@ const Scriptures = (function () {
         return htmlDiv({
             classKey: CLASS_BOOKS,
             content: booksGridContent(volume)
-        })
+        });
     };
 
     booksGridContent = function (volume){
@@ -111,14 +124,40 @@ const Scriptures = (function () {
                 id: book.id,
                 href: `#${volume.id}:${book.id}`,
                 content: book.gridName
-            })
-        })
+            });
+        });
 
         return gridContent;
     };
 
+    chaptersGrid = function (book) {
+        return htmlDiv({
+            classKey: CLASS_VOLUMES,
+            content: htmlElement(TAG_HEADERS, book.fullName)
+        }) + htmlDiv({
+            classKey: CLASS_BOOKS,
+            content: chaptersGridContent(book)
+        });
+    };
+
+    chaptersGridContent = function (book) {
+        let gridContent = "";
+        let chapter = 1;
+
+        while (chapter <= book.numChapters) {
+            gridContent += htmlLink({
+                classKey: `${CLASS_BUTTON} ${CLASS_CHAPTER}`,
+                id: chapter,
+                href: `#0:${book.id}:${chapter}`,
+                content: chapter
+            });
+            chapter += 1;
+        }
+        return gridContent;
+    };
+
     cacheBooks = function (callback) {
-        volumes.forEach(volume => {
+        volumes.forEach(function (volume) {
             let volumeBooks = [];
             let bookID = volume.minBookId;
 
@@ -196,7 +235,7 @@ const Scriptures = (function () {
         let booksLoaded = false;
         let volumesLoaded = false;
 
-        ajax(URL_BOOKS, data => {
+        ajax(URL_BOOKS, function (data) {
             books = data;
             booksLoaded = true;
 
@@ -207,7 +246,7 @@ const Scriptures = (function () {
             }
         });
 
-        ajax(URL_VOLUMES, data => {
+        ajax(URL_VOLUMES, function (data) {
             volumes = data;
             volumesLoaded = true;
 
@@ -220,7 +259,17 @@ const Scriptures = (function () {
     };
 
     navigateBook = function (bookId) {
-        console.log("navigateBook", bookId);
+        let book = books[bookId];
+
+        if (book.numChapters <= 1) {
+            navigateChapter(bookId, book.numChapters);
+        }
+        else {
+            document.getElementById(DIV_SCRIPTURES).innerHTML = htmlDiv({
+                id: DIV_SCRIPTURES_NAVIGATOR,
+                content: chaptersGrid(book)
+            });
+        }
     };
 
     navigateChapter = function (bookId, chapter) {
@@ -287,11 +336,11 @@ const Scriptures = (function () {
                 gridContent += htmlDiv({
                     classKey: CLASS_VOLUMES,
                     content: htmlAnchor(volume) + htmlElement ( TAG_HEADERS, volume.fullName)
-                })
+                });
 
                 gridContent += booksGrid(volume);
             }
-        })
+        });
 
         return gridContent;
     };
