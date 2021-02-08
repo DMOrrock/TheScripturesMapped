@@ -277,3 +277,30 @@ li.match {
     justify-content:center;
     align-items:center;
 }
+
+.label {
+    color: #000;
+    background-color: white;
+    font-family: "Lucida Grande", "Arial", sans-serif;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+    padding: 2px;
+ }
+
+ .padding-left {
+     padding-left: 1rem;
+ }
+
+ .btn {
+    background-color: #e7e7e7; /* Green */
+    border: none;
+    color: black;
+    padding: 3px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: inherit;
+    margin: 1px 1px;
+    cursor: pointer;
+  }
