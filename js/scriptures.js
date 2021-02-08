@@ -37,15 +37,19 @@ const Scriptures = (function () {
     */
     let ajax;
     let cacheBooks;
+    let bookChapterValid;
     let htmlAnchor;
     let htmlDiv;
     let htmlElement;
     let htmlLink;
     let htmlHashLink;
     let init;
-    let onHashChanged;
+    let navigateBook;
+    let navigateChapter;
     let navigateHome;
-    
+    let onHashChanged;
+
+
 
     /*--------------------------------------------------------------------
     *                       PRIVATE METHODS
@@ -73,6 +77,20 @@ const Scriptures = (function () {
         request.send();
     };
 
+    bookChapterValid = function (bookId, chapter) {
+        let book = books[bookId];
+
+        if (book === undefined || chapter < 0 || chapter > book.numChapters) {
+            return false;
+        }
+        
+        if (chapter === 0 && book.numChapters > 0) {
+            return false;
+        }
+
+        return true;
+    }
+
     cacheBooks = function (callback) {
         volumes.forEach(volume => {
             let volumeBooks = [];
@@ -98,7 +116,7 @@ const Scriptures = (function () {
     htmlDiv = function (parameters) {
         let classString = "";
         let contentString = "";
-        let idString= "";
+        let idString = "";
 
         if (parameters.classKey !== undefined) {
             classString = ` class="${parameters.classKey}"`;
@@ -122,8 +140,8 @@ const Scriptures = (function () {
     htmlLink = function (parameters) {
         let classString = "";
         let contentString = "";
-        let hrefString = ""; 
-        let idString= "";
+        let hrefString = "";
+        let idString = "";
 
         if (parameters.classkey !== undefined) {
             classString = ` class="${parameters.classkey}"`;
@@ -153,37 +171,45 @@ const Scriptures = (function () {
         let volumesLoaded = false;
 
         ajax(URL_BOOKS, data => {
-                books = data;
-                booksLoaded = true;
+            books = data;
+            booksLoaded = true;
 
-                if (volumesLoaded) {
-                    cacheBooks(callback);
-                    // console.log(volumes);
-                    // console.log(books);
-                }
+            if (volumesLoaded) {
+                cacheBooks(callback);
+                // console.log(volumes);
+                // console.log(books);
             }
+        }
         );
 
         ajax(URL_VOLUMES, data => {
-                volumes = data;
-                volumesLoaded = true;
+            volumes = data;
+            volumesLoaded = true;
 
-                if (booksLoaded) {
-                    cacheBooks(callback);
-                    // console.log(volumes);
-                    // console.log(books);
-                }
+            if (booksLoaded) {
+                cacheBooks(callback);
+                // console.log(volumes);
+                // console.log(books);
             }
+        }
         );
     };
 
+    navigateBook = function (bookId) {
+        console.log("navigateBook", bookId);
+    }
+
+    navigateChapter = function (bookId, chapter) {
+        console.log("navigateChapter", bookId, " - ", chapter);
+    }
+
     navigateHome = function (volumeId) {
         document.getElementById(DIV_SCRIPTURES).innerHTML =
-        "<div>Old Testament</div>" +
-        "<div>New Testament</div>" +
-        "<div>Book of Mormon</div>" +
-        "<div>Doctrine and Covenants</div>" +
-        "<div>Pearl of Great Price</div>" + volumeId;
+            "<div>Old Testament</div>" +
+            "<div>New Testament</div>" +
+            "<div>Book of Mormon</div>" +
+            "<div>Doctrine and Covenants</div>" +
+            "<div>Pearl of Great Price</div>" + volumeId;
     }
 
     onHashChanged = function () {
@@ -202,11 +228,33 @@ const Scriptures = (function () {
             if (volumeId < volumes[0].id || volumeId > volumes.slice(-1)[0].id) {
                 navigateHome();
             }
-            else{
+            else {
                 navigateHome(volumeId);
             }
         }
-    }    
+        else {
+            let bookId = Number(ids[1]);
+
+            if (books[bookId] === undefined) {
+                navigateHome();
+            }
+            else {
+                if (ids.length === 2) {
+                    navigateBook(bookId);
+                }
+                else {
+                    let chapter = Number(ids[2]);
+
+                    if (bookChapterValid(bookId, chapter)) {
+                        navigateChapter(bookId, chapter);
+                    }
+                    else {
+                        navigateHome();
+                    }
+                }
+            }
+        }
+    }
 
     /*--------------------------------------------------------------------
     *                       PUBLIC API
