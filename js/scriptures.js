@@ -6,7 +6,7 @@
 * DESCRIPTION: Front end JS for Project 1 - IS 542 - BYU
 */
 /*jslint
-    browser, long, this
+    browser, long, this, for
 */
 /*global
     console, google, map
@@ -14,7 +14,7 @@
 /*property
     Animation, DROP, LatLng, LatLngBounds, Marker, Point, Size, animation,
     books, classKey, color, content, exec, extend, fitBounds, fontSize,
-    fontWeight, forEach, fullName, getAttribute, getElementById,
+    fontWeight, forEach, from, fullName, getAttribute, getElementById,
     getElementsByClassName, getLabel, getPosition, gridName, hash, href, icon,
     id, init, innerHTML, label, labelOrigin, lat, length, lng, log, map, maps,
     maxBookId, minBookId, numChapters, onHashChanged, onerror, onload, open,
@@ -92,7 +92,7 @@ const Scriptures = (function () {
     let htmlDiv;
     let htmlElement;
     let htmlLink;
-    let htmlHashLink;
+    // let htmlHashLink;
     let init;
     let insertNavLinks;
     let navigateBook;
@@ -357,9 +357,9 @@ const Scriptures = (function () {
         return `<a${idString}${classString}${hrefString}${titleString}>${contentString}</a>`;
     };
 
-    htmlHashLink = function (hashArguments, content) {
-        return `<a href="javascript:void(0)" onclick="changeHash(${hashArguments})">${content}<a/>`;
-    };
+    // htmlHashLink = function (hashArguments, content) {
+    //     return `<a href="javascript:void(0)" onclick="changeHash(${hashArguments})">${content}<a/>`;
+    // };
 
     init = function (callback) {
         let booksLoaded = false;
@@ -385,7 +385,7 @@ const Scriptures = (function () {
     };
 
     insertNavLinks = function (bookId, chapter) {
-        let navDivs = document.getElementsByClassName(CLASS_NAV_HEADING);
+        let navDivs = Array.from(document.getElementsByClassName(CLASS_NAV_HEADING));
 
         let nextChap = nextChapter(bookId, chapter);
         let prevChap = previousChapter(bookId, chapter);
@@ -409,13 +409,12 @@ const Scriptures = (function () {
             });
         }
 
-
-        for (let element of navDivs) {
+        navDivs.forEach(function (element) {
             element.innerHTML += htmlDiv({
                 content: childDiv,
                 classKey: CLASS_PADDING_LEFT
             });
-        }
+        });
     };
 
     navigateBook = function (bookId) {
@@ -619,4 +618,6 @@ function showLocation(geotagId, placename, latitude, longitude, viewLatitude, vi
     map.setZoom(Number(viewAltitude));
     let position = new google.maps.LatLng(Number(latitude), Number(longitude));
     map.setCenter(position);
+
+    console.log(geotagId, placename, latitude, longitude, viewLatitude, viewLongitude, viewTilt, viewRoll, viewAltitude, viewHeading);
 }
