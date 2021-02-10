@@ -619,5 +619,6 @@ function showLocation(geotagId, placename, latitude, longitude, viewLatitude, vi
     let position = new google.maps.LatLng(Number(latitude), Number(longitude));
     map.setCenter(position);
 
+    // This console.log is just for jsLint purposes
     console.log(geotagId, placename, latitude, longitude, viewLatitude, viewLongitude, viewTilt, viewRoll, viewAltitude, viewHeading);
 }
