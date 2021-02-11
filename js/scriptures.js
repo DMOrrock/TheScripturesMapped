@@ -16,12 +16,13 @@
     books, classKey, color, content, exec, extend, fitBounds, fontSize,
     fontWeight, forEach, from, fullName, getAttribute, getElementById,
     getElementsByClassName, getLabel, getPosition, gridName, hash, href, icon,
-    id, init, innerHTML, label, labelOrigin, lat, length, lng, log, map, maps,
-    maxBookId, minBookId, numChapters, onHashChanged, onerror, onload, open,
-    parse, position, push, querySelectorAll, response, scaledSize, send,
-    setCenter, setLabel, setMap, setZoom, slice, split, status, text, title,
-    tocName, url
+    id, includes, init, innerHTML, label, labelOrigin, lat, length, lng, log,
+    map, maps, maxBookId, minBookId, numChapters, onHashChanged, onerror,
+    onload, open, parse, position, push, querySelectorAll, response, scaledSize,
+    send, setCenter, setLabel, setMap, setZoom, slice, split, status, text,
+    title, tocName, url
 */
+
 
 
 
@@ -52,6 +53,7 @@ const Scriptures = (function () {
     const LABEL_FONT_COLOR = "#22222";
     const LABEL_FONT_SIZE = "12px";
     const LABEL_FONT_WEIGHT = "bold";
+    const LABEL_ICON = "http://image.flaticon.com/icons/svg/252/252025.svg";
     const LAT_LONG_PARSER = /\((.*),'(.*)',(.*),(.*),(.*),(.*),(.*),(.*),(.*),(.*),'(.*)'\)/;
     const REQUEST_GET = "GET";
     const REQUEST_STATUS_OK = 200;
@@ -116,10 +118,12 @@ const Scriptures = (function () {
         let existsInArray = false;
 
         gmMarkers.forEach(function (gmMarker) {
-            if (gmMarker.lat === latitude && gmMarker.lng === longitude) {
+            let gmMarkerLocation = gmMarker.getPosition();
+
+            if (gmMarkerLocation.lat() === Number(latitude) && gmMarkerLocation.lng() === Number(longitude)) {
                 existsInArray = true;
 
-                if (gmMarker.label.text !== placeName) {
+                if (!gmMarker.label.text.split(",").includes(placeName)) {
                     let gmMarkerLabel = gmMarker.getLabel();
                     gmMarkerLabel.text += `, ${placeName}`;
                     gmMarker.setLabel(gmMarkerLabel);
@@ -137,7 +141,6 @@ const Scriptures = (function () {
                 map,
                 animation: google.maps.Animation.DROP,
                 label: {
-                    // FIXME: Add constants for the info below
                     text: placeName,
                     color: LABEL_FONT_COLOR,
                     fontSize: LABEL_FONT_SIZE,
@@ -145,12 +148,10 @@ const Scriptures = (function () {
                 },
                 icon: {
                     // https://www.drupal.org/project/geolocation/issues/2882573
-                    url: "http://image.flaticon.com/icons/svg/252/252025.svg",
+                    url: LABEL_ICON,
                     scaledSize: new google.maps.Size(ICON_SCALED_SIZE, ICON_SCALED_SIZE),
                     labelOrigin: new google.maps.Point(ICON_ORIGIN_X, ICON_ORIGIN_Y)
-                },
-                lat: latitude,
-                lng: longitude
+                }
             });
 
             gmMarkers.push(marker);
