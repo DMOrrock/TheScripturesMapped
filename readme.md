@@ -15,4 +15,4 @@
 
 ### What did I learn (HW #6)
 - Fetch API
-- - asdf
+  - asdf
