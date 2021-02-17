@@ -12,3 +12,7 @@
 - The biggest take away that I had was how important it is to have a readable file (I am refering mainly to scriptures.js)
 - I really liked the html helpers, that is something that I have never done when adding html through JS functions. It was a nice and covienient way to scaffold and add html.
 - I really learned to appreciate the debugger in the console, I had never really used it before (just console.log) and this helped me find the bugs in my code much easier and faster.
+
+### What did I learn (HW #6)
+- Fetch API
+- - asdf
