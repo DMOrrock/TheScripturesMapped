@@ -13,15 +13,15 @@
 */
 /*property
     Animation, DROP, LatLng, LatLngBounds, Marker, Point, Size, animation,
-    books, classKey, color, content, exec, extend, fitBounds, fontSize,
+    books, catch, classKey, color, content, exec, extend, fitBounds, fontSize,
     fontWeight, forEach, from, fullName, getAttribute, getElementById,
     getElementsByClassName, getLabel, getPosition, gridName, hash, href, icon,
-    id, includes, init, innerHTML, label, labelOrigin, lat, length, lng, log,
-    map, maps, maxBookId, minBookId, numChapters, onHashChanged, onerror,
-    onload, open, parse, position, push, querySelectorAll, response, scaledSize,
-    send, setCenter, setLabel, setMap, setZoom, slice, split, status, text,
-    title, tocName, url
+    id, includes, init, innerHTML, json, label, labelOrigin, lat, length, lng,
+    log, map, maps, maxBookId, message, minBookId, numChapters, ok,
+    onHashChanged, position, push, querySelectorAll, scaledSize, setCenter,
+    setLabel, setMap, setZoom, slice, split, text, then, title, tocName, url
 */
+
 
 
 
@@ -55,9 +55,6 @@ const Scriptures = (function () {
     const LABEL_FONT_WEIGHT = "bold";
     const LABEL_ICON = "http://image.flaticon.com/icons/svg/252/252025.svg";
     const LAT_LONG_PARSER = /\((.*),'(.*)',(.*),(.*),(.*),(.*),(.*),(.*),(.*),(.*),'(.*)'\)/;
-    const REQUEST_GET = "GET";
-    const REQUEST_STATUS_OK = 200;
-    const REQUEST_STATUS_ERROR = 400;
     const SINGLE_MARKER_ZOOM = 10;
     const SINGLE_GMMARKERS_INDEX = 0;
     const TAG_HEADERS = "h3";
@@ -159,30 +156,24 @@ const Scriptures = (function () {
     };
 
     ajax = function (url, successCallback, failureCallback, skipJsonParse) {
-        let request = new XMLHttpRequest();
-
-        request.open(REQUEST_GET, url, true);
-
-        request.onload = function () {
-            if (this.status >= REQUEST_STATUS_OK && this.status < REQUEST_STATUS_ERROR) {
-                let data = (
+        fetch(url).then(function (response) {
+            if (response.ok) {
+                return (
                     skipJsonParse
-                    ? this.response
-                    : JSON.parse(this.response)
+                    ? response.text()
+                    : response.json()
                 );
-
-                if (typeof successCallback === "function") {
-                    successCallback(data);
-                }
-            } else {
-                if (typeof successCallback === "function") {
-                    failureCallback(request);
-                }
             }
-        };
-
-        request.onerror = failureCallback;
-        request.send();
+        }).then(function (data) {
+            if (typeof successCallback === "function") {
+                successCallback(data);
+            }
+        }).catch(function (error) {
+            console.log("Fetch error: ", error.message);
+            if (typeof failureCallback === "function") {
+                failureCallback(error);
+            }
+        });
     };
 
     bookChapterValid = function (bookId, chapter) {
