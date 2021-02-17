@@ -62,6 +62,7 @@ const Scriptures = (function () {
     const URL_BOOKS = `${URL_BASE}mapscrip/model/books.php`;
     const URL_SCRIPTURES = `${URL_BASE}mapscrip/mapgetscrip.php`;
     const URL_VOLUMES = `${URL_BASE}mapscrip/model/volumes.php`;
+    const ZOOM_RATIO = 450;
 
     /*--------------------------------------------------------------------
     *                       PRIVATE VARIABLES
@@ -125,13 +126,12 @@ const Scriptures = (function () {
                     gmMarkerLabel.text += `, ${placeName}`;
                     gmMarker.setLabel(gmMarkerLabel);
                 }
-
             }
         });
 
         // For help with labels : https://cheppers.com/google-map-labelled-markers
 
-        if (existsInArray === false) {
+        if (!existsInArray) {
             let marker = new google.maps.Marker({
                 position: {lat: Number(latitude), lng: Number(longitude)},
                 title: placeName,
@@ -539,8 +539,8 @@ const Scriptures = (function () {
 
             if (matches) {
                 let placeName = matches[INDEX_PLACENAME];
-                let latitude = matches[INDEX_LATITUDE];
-                let longitude = matches[INDEX_LONGITUDE];
+                let latitude = parseFloat(matches[INDEX_LATITUDE]);
+                let longitude = parseFloat(matches[INDEX_LONGITUDE]);
                 let flag = matches[INDEX_FLAG];
 
                 if (flag !== "") {
@@ -607,7 +607,7 @@ const Scriptures = (function () {
 }());
 
 function showLocation(geotagId, placename, latitude, longitude, viewLatitude, viewLongitude, viewTilt, viewRoll, viewAltitude, viewHeading) {
-    map.setZoom(Number(viewAltitude));
+    map.setZoom(Number(viewAltitude / ZOOM_RATIO));
     let position = new google.maps.LatLng(Number(latitude), Number(longitude));
     map.setCenter(position);
 
