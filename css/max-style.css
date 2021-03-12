@@ -1,0 +1,34 @@
+#header {
+    height: 65px;
+    flex-direction: row;
+    align-items: center;
+}
+
+#crumbs {
+    padding-left: 1.25em;
+    order: -1;
+}
+
+
+#content {
+    top: 65px;
+    flex-direction: row;
+    align-content: stretch;
+}
+
+#scriptures {
+    min-width: 270px;
+    max-width: 440px;
+    flex: 1 1 30%;
+    height: 100%;
+    min-height: 100%;
+    border-right: 1px solid #aaa;
+}
+
+#map {
+    flex: 1 1 70%;
+}
+
+.title hr {
+    width: 25%;
+}

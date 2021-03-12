@@ -1,157 +1,162 @@
 /*========================================================================
-* FILE:     scriptures.js
-* AUTHOR:   Stephen W. Liddle with some help of Dakota Orrock
-* DATE:     Winter 2021
-*
-* DESCRIPTION: Front end JS for Project 1 - IS 542 - BYU
-*/
+ * FILE:    scriptures.js
+ * AUTHOR:  Stephen W. Liddle
+ * DATE:    Winter 2021
+ *
+ * DESCRIPTION: Front-end JavaScript code for the Scriptures, Mapped.
+ *              IS 542, Winter 2021, BYU.
+ */
 /*jslint
-    browser, long, this, for
+    browser, long
 */
 /*global
-    console, google, map
+    console, google, map, MapLabel, MapLabelInit
 */
 /*property
-    Animation, DROP, LatLng, LatLngBounds, Marker, Point, Size, animation,
-    books, catch, classKey, color, content, exec, extend, fitBounds, fontSize,
-    fontWeight, forEach, from, fullName, getAttribute, getElementById,
-    getElementsByClassName, getLabel, getPosition, gridName, hash, href, icon,
-    id, includes, init, innerHTML, json, label, labelOrigin, lat, length, lng,
-    log, map, maps, maxBookId, message, minBookId, numChapters, ok,
-    onHashChanged, position, push, querySelectorAll, scaledSize, setCenter,
-    setLabel, setMap, setZoom, slice, split, text, then, title, tocName, url
+    Animation, DROP, LatLng, LatLngBounds, Marker, abs, align, animation, books,
+    classKey, content, exec, extend, fitBounds, fontColor, fontSize, forEach,
+    fullName, getAttribute, getCenter, getElementById, getPosition, getTitle,
+    gridName, hash, href, id, includes, init, innerHTML, lat, length, lng, log,
+    map, maps, maxBookId, minBookId, numChapters, onHashChanged, onerror,
+    onload, open, panTo, parentBookId, parse, position, push, querySelectorAll,
+    response, round, send, setMap, setTitle, setZoom, showLocation, slice,
+    split, status, strokeColor, text, title, tocName
 */
-
-
-
-
-
 
 const Scriptures = (function () {
     "use strict";
 
-    /*--------------------------------------------------------------------
-    *                      CONSTANTS
-    */
-
+    /*-------------------------------------------------------------------
+     *                      CONSTANTS
+     */
     const BOTTOM_PADDING = "<br /><br />";
     const CLASS_BOOKS = "books";
     const CLASS_BUTTON = "btn";
-    const CLASS_VOLUMES = "volumes";
     const CLASS_CHAPTER = "chapter";
-    const CLASS_NAV_HEADING = "navheading";
-    const CLASS_PADDING_LEFT = "padding-left";
+    const CLASS_ICON = "material-icons";
+    const CLASS_VOLUME = "volume";
+    const CROSS_FADE_LENGTH_MS = 750;
+    const DIV_BREADCRUMBS = "crumbs";
     const DIV_SCRIPTURES_NAVIGATOR = "scripnav";
-    const DIV_SCRIPTURES = "scriptures";
-    const ICON_ORIGIN_X = 10;
-    const ICON_ORIGIN_Y = 40;
-    const ICON_SCALED_SIZE = 30;
+    const DIV_SCRIPTURES_1 = "s1";
+    const DIV_SCRIPTURES_2 = "s2"
+    const ICON_NEXT = "skip_next";
+    const ICON_PREVIOUS = "skip_previous";
     const INDEX_FLAG = 11;
     const INDEX_LATITUDE = 3;
     const INDEX_LONGITUDE = 4;
     const INDEX_PLACENAME = 2;
-    const LABEL_FONT_COLOR = "#22222";
-    const LABEL_FONT_SIZE = "12px";
-    const LABEL_FONT_WEIGHT = "bold";
-    const LABEL_ICON = "http://image.flaticon.com/icons/svg/252/252025.svg";
-    const LAT_LONG_PARSER = /\((.*),'(.*)',(.*),(.*),(.*),(.*),(.*),(.*),(.*),(.*),'(.*)'\)/;
-    const SINGLE_MARKER_ZOOM = 10;
-    const SINGLE_GMMARKERS_INDEX = 0;
-    const TAG_HEADERS = "h3";
+    const LAT_LON_PARSER = /\((.*),'(.*)',(.*),(.*),(.*),(.*),(.*),(.*),(.*),(.*),'(.*)'\)/;
+    const MAX_ZOOM_LEVEL = 18;
+    const MIN_ZOOM_LEVEL = 6;
+    const SLIDE_DURATION = 250;
+    const TAG_HEADER5 = "h5";
+    const TAG_LIST_ITEM = "li";
+    const TAG_SPAN = "span";
+    const TAG_UNORDERED_LIST = "ul";
+    const TEXT_TOP_LEVEL = "Home";
     const URL_BASE = "https://scriptures.byu.edu/";
     const URL_BOOKS = `${URL_BASE}mapscrip/model/books.php`;
     const URL_SCRIPTURES = `${URL_BASE}mapscrip/mapgetscrip.php`;
     const URL_VOLUMES = `${URL_BASE}mapscrip/model/volumes.php`;
     const ZOOM_RATIO = 450;
 
-    /*--------------------------------------------------------------------
-    *                       PRIVATE VARIABLES
-    */
+    /*-------------------------------------------------------------------
+     *                      PRIVATE VARIABLES
+     */
     let books;
+    let gmLabels = [];
     let gmMarkers = [];
+    let initializedMapLabel = false;
+    let requestedBookId;
+    let requestedChapter;
+    let requestedNextPrevious;
     let volumes;
-    let savedBookId;
-    let savedChapter;
+    let activeScripDiv = DIV_SCRIPTURES_1;
+    let alternateScripDiv = DIV_SCRIPTURES_2;
 
-    /*--------------------------------------------------------------------
-    *                       PRIVATE METHOD DECLARATIONS
-    */
+
+    /*-------------------------------------------------------------------
+     *                      PRIVATE METHOD DECLARATIONS
+     */
     let addMarker;
     let ajax;
-    let cacheBooks;
     let bookChapterValid;
     let booksGrid;
     let booksGridContent;
+    let cacheBooks;
     let chaptersGrid;
     let chaptersGridContent;
     let clearMarkers;
-    let encodedScripturesURLParameters;
-    let getScriptersCallback;
+    let crossFadeDivs;
+    let encodedScripturesUrlParameters;
+    let getScripturesCallback;
+    let getNextScripturesCallback;
+    let getPrevScripturesCallback;
     let getScripturesFailure;
     let htmlAnchor;
     let htmlDiv;
     let htmlElement;
     let htmlLink;
-    // let htmlHashLink;
+    let htmlListItem;
+    let htmlListItemLink;
     let init;
-    let insertNavLinks;
+    let injectBreadcrumbs;
+    let markerIndex;
+    let mergePlacename;
     let navigateBook;
     let navigateChapter;
     let navigateHome;
     let nextChapter;
+    let nextPreviousMarkup;
     let onHashChanged;
     let previousChapter;
-    let setUpMarkers;
+    let setupMarkers;
+    let slideDivsLeft;
+    let slideDivsRight;    
+    let showLocation;
+    let swapDivs;
     let titleForBookChapter;
-    let updateMap;
+    let volumeForId;
     let volumesGridContent;
+    let zoomMapToFitMarkers;
 
+    /*-------------------------------------------------------------------
+     *                      PRIVATE METHODS
+     */
+    addMarker = function (placename, latitude, longitude) {
+        let index = markerIndex(latitude, longitude);
 
-
-    /*--------------------------------------------------------------------
-    *                       PRIVATE METHODS
-    */
-
-    addMarker = function (placeName, latitude, longitude) {
-        let existsInArray = false;
-
-        gmMarkers.forEach(function (gmMarker) {
-            let gmMarkerLocation = gmMarker.getPosition();
-
-            if (gmMarkerLocation.lat() === Number(latitude) && gmMarkerLocation.lng() === Number(longitude)) {
-                existsInArray = true;
-
-                if (!gmMarker.label.text.split(",").includes(placeName)) {
-                    let gmMarkerLabel = gmMarker.getLabel();
-                    gmMarkerLabel.text += `, ${placeName}`;
-                    gmMarker.setLabel(gmMarkerLabel);
-                }
-            }
-        });
-
-        // For help with labels : https://cheppers.com/google-map-labelled-markers
-
-        if (!existsInArray) {
+        if (index >= 0) {
+            mergePlacename(placename, index);
+        } else {
             let marker = new google.maps.Marker({
-                position: {lat: Number(latitude), lng: Number(longitude)},
-                title: placeName,
+                position: { lat: Number(latitude), lng: Number(longitude) },
                 map,
-                animation: google.maps.Animation.DROP,
-                label: {
-                    text: placeName,
-                    color: LABEL_FONT_COLOR,
-                    fontSize: LABEL_FONT_SIZE,
-                    fontWeight: LABEL_FONT_WEIGHT
-                },
-                icon: {
-                    // https://www.drupal.org/project/geolocation/issues/2882573
-                    url: LABEL_ICON,
-                    scaledSize: new google.maps.Size(ICON_SCALED_SIZE, ICON_SCALED_SIZE),
-                    labelOrigin: new google.maps.Point(ICON_ORIGIN_X, ICON_ORIGIN_Y)
-                }
+                title: placename,
+                animation: google.maps.Animation.DROP
             });
 
             gmMarkers.push(marker);
+
+            if (!initializedMapLabel) {
+                const initialize = MapLabelInit;
+
+                initialize();
+                initializedMapLabel = true;
+            }
+
+            let mapLabel = new MapLabel({
+                text: marker.getTitle(),
+                position: new google.maps.LatLng(Number(latitude), Number(longitude)),
+                map,
+                fontSize: 16,
+                fontColor: "#201000",
+                strokeColor: "#fff8f0",
+                align: "left"
+            });
+
+            gmLabels.push(mapLabel);
         }
     };
 
@@ -160,8 +165,8 @@ const Scriptures = (function () {
             if (response.ok) {
                 return (
                     skipJsonParse
-                    ? response.text()
-                    : response.json()
+                        ? response.text()
+                        : response.json()
                 );
             }
         }).then(function (data) {
@@ -212,10 +217,28 @@ const Scriptures = (function () {
         return gridContent;
     };
 
+    cacheBooks = function (callback) {
+        volumes.forEach(function (volume) {
+            let volumeBooks = [];
+            let bookId = volume.minBookId;
+
+            while (bookId <= volume.maxBookId) {
+                volumeBooks.push(books[bookId]);
+                bookId += 1;
+            }
+
+            volume.books = volumeBooks;
+        });
+
+        if (typeof callback === "function") {
+            callback();
+        }
+    };
+
     chaptersGrid = function (book) {
         return htmlDiv({
-            classKey: CLASS_VOLUMES,
-            content: htmlElement(TAG_HEADERS, book.fullName)
+            classKey: CLASS_VOLUME,
+            content: htmlElement(TAG_HEADER5, book.fullName)
         }) + htmlDiv({
             classKey: CLASS_BOOKS,
             content: chaptersGridContent(book)
@@ -233,62 +256,97 @@ const Scriptures = (function () {
                 href: `#0:${book.id}:${chapter}`,
                 content: chapter
             });
+
             chapter += 1;
         }
+
         return gridContent;
-    };
-
-    cacheBooks = function (callback) {
-        volumes.forEach(function (volume) {
-            let volumeBooks = [];
-            let bookID = volume.minBookId;
-
-            while (bookID <= volume.maxBookId) {
-                volumeBooks.push(books[bookID]);
-                bookID += 1;
-            }
-
-            volume.books = volumeBooks;
-        });
-
-        if (typeof callback === "function") {
-            callback();
-        }
     };
 
     clearMarkers = function () {
         gmMarkers.forEach(function (marker) {
+            marker.setTitle("null");
             marker.setMap(null);
         });
 
         gmMarkers = [];
+        gmLabels = [];
     };
 
-    encodedScripturesURLParameters = function (bookId, chapter, verses, isJst) {
+    crossFadeDivs = function() {
+        $("#" + alternateScripDiv).hide();
+        $("#" + alternateScripDiv).animate({ left: "0px" }, { duration: 0 });
+        $("#" + alternateScripDiv).fadeIn(CROSS_FADE_LENGTH_MS);
+        $("#" + activeScripDiv).fadeOut(CROSS_FADE_LENGTH_MS);
+    }
+
+    encodedScripturesUrlParameters = function (bookId, chapter, verses, isJst) {
         if (bookId !== undefined && chapter !== undefined) {
             let options = "";
 
             if (verses !== undefined) {
-                options += `&versus=${verses}`;
+                options += verses;
             }
 
             if (isJst !== undefined) {
-                options += `&jst=JST`;
+                options += "&jst=JST";
             }
 
-            return `${URL_SCRIPTURES}?book=${bookId}&chap=${chapter}${options}`;
+            return `${URL_SCRIPTURES}?book=${bookId}&chap=${chapter}&verses${options}`;
         }
     };
 
-    getScriptersCallback = function (chapterHtml) {
-        document.getElementById(DIV_SCRIPTURES).innerHTML = chapterHtml;
-        insertNavLinks(savedBookId, savedChapter);
-        setUpMarkers();
+    getScripturesCallback = function (chapterHtml) {
+        let book = books[requestedBookId];
+
+        // Load the incoming div
+        document.getElementById(alternateScripDiv).innerHTML = chapterHtml;
+
+        document.querySelectorAll(".navheading").forEach(function (element) {
+            element.innerHTML += `<div class="nextprev">${requestedNextPrevious}</div>`;
+        });
+
+        crossFadeDivs();
+        injectBreadcrumbs(volumeForId(book.parentBookId), book, requestedChapter);
+        setupMarkers(alternateScripDiv);
+        swapDivs();
+    };
+
+    getNextScripturesCallback = function (chapterHtml) {
+        let book = books[requestedBookId];
+
+        // Load the incoming div
+        document.getElementById(alternateScripDiv).innerHTML = chapterHtml;
+
+        document.querySelectorAll(".navheading").forEach(function (element) {
+            element.innerHTML += `<div class="nextprev">${requestedNextPrevious}</div>`;
+        });
+        
+        slideDivsLeft();
+        injectBreadcrumbs(volumeForId(book.parentBookId), book, requestedChapter);
+        setupMarkers(alternateScripDiv);
+        swapDivs();
+    };
+
+    getPrevScripturesCallback = function (chapterHtml) {
+        let book = books[requestedBookId];
+
+        // Load the incoming div
+        document.getElementById(alternateScripDiv).innerHTML = chapterHtml;
+
+        document.querySelectorAll(".navheading").forEach(function (element) {
+            element.innerHTML += `<div class="nextprev">${requestedNextPrevious}</div>`;
+        });
+        
+        slideDivsRight();
+        injectBreadcrumbs(volumeForId(book.parentBookId), book, requestedChapter);
+        setupMarkers(alternateScripDiv);        
+        swapDivs();
     };
 
     getScripturesFailure = function () {
-        // FIXME: Better Error Handling
-        document.getElementById(DIV_SCRIPTURES).innerHTML = "Unable to retrieve chapter contents.";
+        document.getElementById(DIV_SCRIPTURES_1).innerHTML = "Unable to retrieve chapter contents.";
+        injectBreadcrumbs();
     };
 
     htmlAnchor = function (volume) {
@@ -315,8 +373,14 @@ const Scriptures = (function () {
         return `<div${idString}${classString}>${contentString}</div>`;
     };
 
-    htmlElement = function (tagName, content) {
-        return `<${tagName}>${content}</${tagName}>`;
+    htmlElement = function (tagName, content, classValue) {
+        let classString = "";
+
+        if (classValue !== undefined) {
+            classString = ` class="${classValue}"`;
+        }
+
+        return `<${tagName}${classString}>${content}</${tagName}>`;
     };
 
     htmlLink = function (parameters) {
@@ -349,9 +413,13 @@ const Scriptures = (function () {
         return `<a${idString}${classString}${hrefString}${titleString}>${contentString}</a>`;
     };
 
-    // htmlHashLink = function (hashArguments, content) {
-    //     return `<a href="javascript:void(0)" onclick="changeHash(${hashArguments})">${content}<a/>`;
-    // };
+    htmlListItem = function (content) {
+        return htmlElement(TAG_LIST_ITEM, content);
+    };
+
+    htmlListItemLink = function (content, href = "") {
+        return htmlListItem(htmlLink({ content, href: `#${href}` }));
+    };
 
     init = function (callback) {
         let booksLoaded = false;
@@ -365,7 +433,6 @@ const Scriptures = (function () {
                 cacheBooks(callback);
             }
         });
-
         ajax(URL_VOLUMES, function (data) {
             volumes = data;
             volumesLoaded = true;
@@ -376,37 +443,60 @@ const Scriptures = (function () {
         });
     };
 
-    insertNavLinks = function (bookId, chapter) {
-        let navDivs = Array.from(document.getElementsByClassName(CLASS_NAV_HEADING));
+    injectBreadcrumbs = function (volume, book, chapter) {
+        let crumbs = "";
 
-        let nextChap = nextChapter(bookId, chapter);
-        let prevChap = previousChapter(bookId, chapter);
-        let childDiv = "";
+        if (volume !== undefined) {
+            crumbs = htmlListItemLink(TEXT_TOP_LEVEL);
 
-        if (prevChap !== undefined) {
-            childDiv += htmlLink({
-                content: "<",
-                href: `#0:${prevChap[0]}:${prevChap[1]}`,
-                title: prevChap[2],
-                classKey: CLASS_BUTTON
-            });
+            if (book === undefined) {
+                crumbs += htmlListItem(volume.fullName);
+            } else {
+                crumbs += htmlListItemLink(volume.fullName, volume.id);
+
+                if (chapter === undefined || chapter <= 0) {
+                    crumbs += htmlListItem(book.tocName);
+                } else {
+                    crumbs += htmlListItemLink(book.tocName, `${volume.id}:${book.id}`);
+                    crumbs += htmlListItem(chapter);
+                }
+            }
         }
 
-        if (nextChap !== undefined) {
-            childDiv += htmlLink({
-                content: ">",
-                href: `#0:${nextChap[0]}:${nextChap[1]}`,
-                title: nextChap[2],
-                classKey: CLASS_BUTTON
-            });
+        document.getElementById(DIV_BREADCRUMBS).innerHTML = htmlElement(TAG_UNORDERED_LIST, crumbs);
+    };
+
+    markerIndex = function (latitude, longitude) {
+        let i = gmMarkers.length - 1;
+
+        while (i >= 0) {
+            let marker = gmMarkers[i];
+
+            // Note: here is the safe way to compare IEEE floating-point
+            // numbers: compare their difference to a small number
+            const latitudeDelta = Math.abs(marker.getPosition().lat() - latitude);
+            const longitudeDelta = Math.abs(marker.getPosition().lng() - longitude);
+
+            if (latitudeDelta < 0.00000001 && longitudeDelta < 0.00000001) {
+                return i;
+            }
+
+            i -= 1;
         }
 
-        navDivs.forEach(function (element) {
-            element.innerHTML += htmlDiv({
-                content: childDiv,
-                classKey: CLASS_PADDING_LEFT
-            });
-        });
+        return -1;
+    };
+
+    mergePlacename = function (placename, index) {
+        let marker = gmMarkers[index];
+        let label = gmLabels[index];
+        let title = marker.getTitle();
+
+        if (!title.includes(placename)) {
+            title += ", " + placename;
+            marker.setTitle(title);
+            label.text = title;
+        }
     };
 
     navigateBook = function (bookId) {
@@ -415,26 +505,55 @@ const Scriptures = (function () {
         if (book.numChapters <= 1) {
             navigateChapter(bookId, book.numChapters);
         } else {
-            document.getElementById(DIV_SCRIPTURES).innerHTML = htmlDiv({
+            // Load the incoming div
+            document.getElementById(alternateScripDiv).innerHTML = htmlDiv({
                 id: DIV_SCRIPTURES_NAVIGATOR,
                 content: chaptersGrid(book)
             });
+
+            crossFadeDivs();
+            swapDivs();
+            injectBreadcrumbs(volumeForId(book.parentBookId), book);
         }
     };
 
-    navigateChapter = function (bookId, chapter) {
-        savedBookId = bookId;
-        savedChapter = chapter;
+    navigateChapter = function (bookId, chapter, direction) {
+        requestedBookId = bookId;
+        requestedChapter = chapter;
 
-        ajax(encodedScripturesURLParameters(bookId, chapter), getScriptersCallback, getScripturesFailure, true);
+        let nextPrev = previousChapter(bookId, chapter);
+
+        if (nextPrev === undefined) {
+            requestedNextPrevious = "";
+        } else {
+            requestedNextPrevious = nextPreviousMarkup(nextPrev, ICON_PREVIOUS, "prev");
+        }
+
+        nextPrev = nextChapter(bookId, chapter);
+
+        if (nextPrev !== undefined) {
+            requestedNextPrevious += nextPreviousMarkup(nextPrev, ICON_NEXT, "next");
+        }
+
+        if (direction === "next") {
+            ajax(encodedScripturesUrlParameters(bookId, chapter), getNextScripturesCallback, getScripturesFailure, true);
+        } else if (direction === "prev") {
+            ajax(encodedScripturesUrlParameters(bookId, chapter), getPrevScripturesCallback, getScripturesFailure, true);
+        } else {
+            ajax(encodedScripturesUrlParameters(bookId, chapter), getScripturesCallback, getScripturesFailure, true);
+        }
     };
 
     navigateHome = function (volumeId) {
-        document.getElementById(DIV_SCRIPTURES).innerHTML = htmlDiv({
+        // Load the incoming div
+        document.getElementById(alternateScripDiv).innerHTML = htmlDiv({
             id: DIV_SCRIPTURES_NAVIGATOR,
             content: volumesGridContent(volumeId)
         });
 
+        crossFadeDivs();
+        swapDivs();
+        injectBreadcrumbs(volumeForId(volumeId));
     };
 
     nextChapter = function (bookId, chapter) {
@@ -467,6 +586,14 @@ const Scriptures = (function () {
         }
     };
 
+    nextPreviousMarkup = function (nextPrev, icon, direction) {
+        return htmlLink({
+            content: htmlElement(TAG_SPAN, icon, CLASS_ICON),
+            href: `#0:${nextPrev[0]}:${nextPrev[1]}:${direction}`,
+            title: nextPrev[2]
+        });
+    };
+
     onHashChanged = function () {
         let ids = [];
 
@@ -496,7 +623,7 @@ const Scriptures = (function () {
                     let chapter = Number(ids[2]);
 
                     if (bookChapterValid(bookId, chapter)) {
-                        navigateChapter(bookId, chapter);
+                        navigateChapter(bookId, chapter, ids[3]);
                     } else {
                         navigateHome();
                     }
@@ -529,30 +656,66 @@ const Scriptures = (function () {
         }
     };
 
-    setUpMarkers = function () {
+    setupMarkers = function (divId) {
         if (gmMarkers.length > 0) {
             clearMarkers();
         }
 
-        document.querySelectorAll("a[onclick^=\"showLocation(\"]").forEach(function (ele) {
-            let matches = LAT_LONG_PARSER.exec(ele.getAttribute("onClick"));
+        let matches;
+
+        document.querySelectorAll("#" + divId + " a[onclick^=\"showLocation(\"]").forEach(function (element) {
+            matches = LAT_LON_PARSER.exec(element.getAttribute("onclick"));
 
             if (matches) {
-                let placeName = matches[INDEX_PLACENAME];
+                let placename = matches[INDEX_PLACENAME];
                 let latitude = parseFloat(matches[INDEX_LATITUDE]);
                 let longitude = parseFloat(matches[INDEX_LONGITUDE]);
                 let flag = matches[INDEX_FLAG];
 
                 if (flag !== "") {
-                    placeName = `${placeName} ${flag}`;
+                    placename = `${placename} ${flag}`;
                 }
 
-                addMarker(placeName, latitude, longitude);
+                addMarker(placename, latitude, longitude);
             }
         });
 
-        updateMap();
+        zoomMapToFitMarkers(matches);
     };
+
+    slideDivsLeft = function() {
+        // Position incoming div to the right
+        let activeWindowWidth = document.getElementById(activeScripDiv).offsetWidth + 1;
+        $("#" + alternateScripDiv).animate({ left: activeWindowWidth + "px" }, { duration: 0 });
+        $("#" + alternateScripDiv).show();
+
+        // Slide Divs to the left
+        $("#" + activeScripDiv).animate({ left: "-" + activeWindowWidth + "px" }, { duration: SLIDE_DURATION });
+        $("#" + alternateScripDiv).animate({ left: "0px" }, { duration: SLIDE_DURATION });
+    }
+
+    slideDivsRight = function() {
+        // Position incoming div to the left
+        let activeWindowWidth = document.getElementById(activeScripDiv).offsetWidth + 1;
+        $("#" + alternateScripDiv).animate({ left: "-" + activeWindowWidth + "px" }, { duration: 0 });
+        $("#" + alternateScripDiv).show();
+
+        // Slide Divs to the right
+        $("#" + activeScripDiv).animate({ left: activeWindowWidth + "px" }, { duration: SLIDE_DURATION });
+        $("#" + alternateScripDiv).animate({ left: "0px" }, { duration: SLIDE_DURATION });
+    }
+
+    showLocation = function (id, placename, latitude, longitude, viewLatitude, viewLongitude, viewTilt, viewRoll, viewAltitude, viewHeading) {
+        console.log(id, placename, latitude, longitude, viewLatitude, viewLongitude, viewTilt, viewRoll, viewHeading);
+        map.panTo({ lat: latitude, lng: longitude });
+        map.setZoom(Math.round(viewAltitude / ZOOM_RATIO));
+    };
+
+    swapDivs = function () {
+        let tempVar = activeScripDiv;
+        activeScripDiv = alternateScripDiv;
+        alternateScripDiv = tempVar;
+    }
 
     titleForBookChapter = function (book, chapter) {
         if (book !== undefined) {
@@ -564,18 +727,9 @@ const Scriptures = (function () {
         }
     };
 
-    updateMap = function () {
-        if (gmMarkers.length === 1) {
-            map.setZoom(SINGLE_MARKER_ZOOM);
-            map.setCenter(gmMarkers[SINGLE_GMMARKERS_INDEX].getPosition());
-        } else if (gmMarkers.length > 1) {
-            let bounds = new google.maps.LatLngBounds();
-
-            gmMarkers.forEach(function (marker) {
-                bounds.extend(marker.getPosition());
-            });
-
-            map.fitBounds(bounds);
+    volumeForId = function (volumeId) {
+        if (volumeId !== undefined && volumeId > 0 && volumeId <= volumes.length) {
+            return volumes[volumeId - 1];
         }
     };
 
@@ -585,8 +739,8 @@ const Scriptures = (function () {
         volumes.forEach(function (volume) {
             if (volumeId === undefined || volumeId === volume.id) {
                 gridContent += htmlDiv({
-                    classKey: CLASS_VOLUMES,
-                    content: htmlAnchor(volume) + htmlElement(TAG_HEADERS, volume.fullName)
+                    classKey: CLASS_VOLUME,
+                    content: htmlAnchor(volume) + htmlElement(TAG_HEADER5, volume.fullName)
                 });
 
                 gridContent += booksGrid(volume);
@@ -596,21 +750,40 @@ const Scriptures = (function () {
         return gridContent + BOTTOM_PADDING;
     };
 
-    /*--------------------------------------------------------------------
-    *                       PUBLIC API
-    */
+    zoomMapToFitMarkers = function (matches) {
+        if (gmMarkers.length > 0) {
+            if (gmMarkers.length === 1 && matches) {
+                // When there's exactly one marker, add it and zoom to it
+                let zoomLevel = Math.round(Number(matches[9]) / ZOOM_RATIO);
 
+                if (zoomLevel < MIN_ZOOM_LEVEL) {
+                    zoomLevel = MIN_ZOOM_LEVEL;
+                } else if (zoomLevel > MAX_ZOOM_LEVEL) {
+                    zoomLevel = MAX_ZOOM_LEVEL;
+                }
+
+                map.setZoom(zoomLevel);
+                map.panTo(gmMarkers[0].position);
+            } else {
+                let bounds = new google.maps.LatLngBounds();
+
+                gmMarkers.forEach(function (marker) {
+                    bounds.extend(marker.position);
+                });
+
+                map.panTo(bounds.getCenter());
+                map.fitBounds(bounds);
+            }
+        }
+    };
+
+    /*-------------------------------------------------------------------
+     *                      PUBLIC API
+     */
     return {
         init,
-        onHashChanged
+        onHashChanged,
+        showLocation
     };
+
 }());
-
-function showLocation(geotagId, placename, latitude, longitude, viewLatitude, viewLongitude, viewTilt, viewRoll, viewAltitude, viewHeading) {
-    map.setZoom(Number(viewAltitude / ZOOM_RATIO));
-    let position = new google.maps.LatLng(Number(latitude), Number(longitude));
-    map.setCenter(position);
-
-    // This console.log is just for jsLint purposes
-    console.log(geotagId, placename, latitude, longitude, viewLatitude, viewLongitude, viewTilt, viewRoll, viewAltitude, viewHeading);
-}
